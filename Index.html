@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureGmail Pro - Enterprise Email Security</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #db2777 100%); }
+        .glass { backdrop-filter: blur(16px); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .cyber-grid { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; }
+        .glow-green { box-shadow: 0 0 20px rgba(34,197,94,0.4); }
+        .glow-red { box-shadow: 0 0 20px rgba(239,68,68,0.4); }
+        .glow-blue { box-shadow: 0 0 20px rgba(59,130,246,0.4); }
+        .glow-purple { box-shadow: 0 0 20px rgba(147,51,234,0.4); }
+        @keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-glow { animation: pulse-glow 2s infinite; }
+        .animate-scan { animation: scan 2s infinite linear; }
+        @keyframes scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="gradient-bg cyber-grid min-h-screen">
+    <div id="app"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        // Core Security Engine
+        class SecurityEngine {
+            constructor() {
+                this.threats = new Set(['malware@virus.com', 'phishing@scam.net', 'urgent@fake-bank.com']);
+                this.patterns = {
+                    phishing: /urgent|verify|suspend|account|click here|act now/i,
+                    malware: /\.(exe|scr|bat|cmd|pif|zip)$/i,
+                    spam: /lottery|winner|claim|prize|free money/i
+                };
+            }
+
+            async scanEmail(email) {
+                await new Promise(r => setTimeout(r, 200)); // Simulate scan time
+                
+                const isThreat = this.detectThreat(email);
+                const threatType = isThreat ? this.getThreatType(email) : null;
+                
+                return {
+                    safe: !isThreat,
+                    threatType,
+                    confidence: Math.random() * 0.3 + 0.7,
+                    category: this.categorize(email),
+                    priority: this.getPriority(email)
+                };
+            }
+
+            detectThreat(email) {
+                return this.threats.has(email.sender) ||
+                       this.patterns.phishing.test(email.subject + ' ' + email.content) ||
+                       email.attachments?.some(att => this.patterns.malware.test(att.name));
+            }
+
+            getThreatType(email) {
+                if (this.threats.has(email.sender)) return 'Known Malicious Sender';
+                if (this.patterns.phishing.test(email.subject + ' ' + email.content)) return 'Phishing Attempt';
+                if (email.attachments?.some(att => this.patterns.malware.test(att.name))) return 'Malware Attachment';
+                return 'Suspicious Content';
+            }
+
+            categorize(email) {
+                const content = (email.subject + ' ' + email.content).toLowerCase();
+                if (content.includes('meeting') || content.includes('schedule')) return 'business';
+                if (content.includes('invoice') || content.includes('payment')) return 'financial';
+                if (content.includes('newsletter') || content.includes('unsubscribe')) return 'newsletter';
+                return 'general';
+            }
+
+            getPriority(email) {
+                const content = (email.subject + ' ' + email.content).toLowerCase();
+                if (content.includes('urgent') || content.includes('asap')) return 'high';
+                if (content.includes('meeting') || content.includes('deadline')) return 'medium';
+                return 'low';
+            }
+        }
+
+        // AI Assistant
+        class AIAssistant {
+            constructor() {
+                this.styles = {
+                    professional: "Thank you for your email. I'll review this and respond shortly.",
+                    casual: "Got your message! I'll get back to you soon.",
+                    formal: "I acknowledge receipt of your correspondence and will respond accordingly."
+                };
+            }
+
+            generateResponse(email, style = 'professional') {
+                return this.styles[style] || this.styles.professional;
+            }
+
+            categorizeEmail(email) {
+                // AI categorization logic
+                return 'business'; // Simplified for demo
+            }
+        }
+
+        // Notification Component
+        const Notification = ({ notification, onDismiss }) => (
+            <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all transform ${
+                notification.type === 'threat' ? 'bg-red-500 glow-red' :
+                notification.type === 'success' ? 'bg-green-500 glow-green' :
+                notification.type === 'ai' ? 'bg-purple-500 glow-purple' :
+                'bg-blue-500 glow-blue'
+            } text-white`}>
+                <div className="flex justify-between items-start">
+                    <div className="flex items-start">
+                        <i className={`fas ${
+                            notification.type === 'threat' ? 'fa-shield-alt' :
+                            notification.type === 'success' ? 'fa-check-circle' :
+                            notification.type === 'ai' ? 'fa-brain' : 'fa-info-circle'
+                        } mr-2 mt-1`}></i>
+                        <div>
+                            <div className="font-semibold">{notification.title}</div>
+                            <div className="text-sm opacity-90">{notification.message}</div>
+                        </div>
+                    </div>
+                    <button onClick={() => onDismiss(notification.id)} className="ml-4 opacity-70 hover:opacity-100">
+                        <i className="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        );
+
+        // Main Application
+        const SecureGmailPro = () => {
+            const [activeTab, setActiveTab] = useState('inbox');
+            const [emails, setEmails] = useState([]);
+            const [threats, setThreats] = useState([]);
+            const [isScanning, setIsScanning] = useState(false);
+            const [notification, setNotification] = useState(null);
+            const [stats, setStats] = useState({ scanned: 0, blocked: 0, clean: 0 });
+            const [aiStyle, setAiStyle] = useState('professional');
+
+            const security = useRef(new SecurityEngine());
+            const ai = useRef(new AIAssistant());
+
+            // Mock emails with real threats
+            const mockEmails = [
+                {
+                    id: 1, sender: 'john@company.com', subject: 'Q4 Meeting Schedule',
+                    content: 'Let\'s schedule our Q4 review meeting for next week.', attachments: []
+                },
+                {
+                    id: 2, sender: 'urgent@fake-bank.com', subject: 'URGENT: Account Suspended',
+                    content: 'Your account has been suspended. Click here to verify immediately.', attachments: []
+                },
+                {
+                    id: 3, sender: 'sarah@workplace.net', subject: 'Project Update',
+                    content: 'The project deadline has been moved to Friday.', attachments: [{ name: 'update.pdf' }]
+                },
+                {
+                    id: 4, sender: 'malware@virus.com', subject: 'Invoice Payment',
+                    content: 'Please download and run the attached file.', attachments: [{ name: 'invoice.exe' }]
+                }
+            ];
+
+            const showNotification = useCallback((type, title, message) => {
+                const id = Date.now();
+                setNotification({ id, type, title, message });
+                setTimeout(() => setNotification(null), 4000);
+            }, []);
+
+            const scanEmails = async () => {
+                setIsScanning(true);
+                showNotification('ai', 'Security Scan', 'Starting comprehensive email analysis...');
+
+                const scanned = [];
+                const blocked = [];
+
+                for (const email of mockEmails) {
+                    const result = await security.current.scanEmail(email);
+                    
+                    if (result.safe) {
+                        scanned.push({ ...email, result });
+                    } else {
+                        blocked.push({ ...email, result });
+                        showNotification('threat', 'Threat Blocked', 
+                            `${result.threatType} from ${email.sender} quarantined.`);
+                    }
+
+                    setStats(prev => ({
+                        scanned: prev.scanned + 1,
+                        blocked: result.safe ? prev.blocked : prev.blocked + 1,
+                        clean: result.safe ? prev.clean + 1 : prev.clean
+                    }));
+                }
+
+                setEmails(scanned);
+                setThreats(blocked);
+                setIsScanning(false);
+                showNotification('success', 'Scan Complete', 
+                    `Processed ${mockEmails.length} emails. ${blocked.length} threats blocked.`);
+            };
+
+            useEffect(() => { setTimeout(scanEmails, 1000); }, []);
+
+            const EmailCard = ({ email, type = 'clean' }) => (
+                <div className={`glass rounded-xl p-4 mb-3 ${
+                    type === 'threat' ? 'glow-red' : 'glow-green'
+                } transition-all hover:scale-102`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                            <div className="flex items-center mb-2">
+                                <span className="font-semibold text-white">{email.sender}</span>
+                                <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                                    type === 'threat' ? 'bg-red-500' : 'bg-green-500'
+                                } text-white`}>
+                                    {type === 'threat' ? 'BLOCKED' : 'SECURE'}
+                                </span>
+                                <span className="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">
+                                    {email.result?.category?.toUpperCase()}
+                                </span>
+                            </div>
+                            <div className="font-medium text-white mb-1">{email.subject}</div>
+                            <div className="text-gray-200 text-sm">{email.content}</div>
+                            {email.attachments?.length > 0 && (
+                                <div className="mt-2">
+                                    {email.attachments.map((att, i) => (
+                                        <span key={i} className="bg-gray-600 text-white px-2 py-1 rounded text-xs mr-1">
+                                            <i className="fas fa-paperclip mr-1"></i>{att.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div className="flex space-x-2">
+                            <button className="text-gray-300 hover:text-white"><i className="fas fa-star"></i></button>
+                            <button className="text-gray-300 hover:text-white"><i className="fas fa-reply"></i></button>
+                            <button className="text-gray-300 hover:text-white"><i className="fas fa-archive"></i></button>
+                        </div>
+                        {type === 'clean' && (
+                            <button 
+                                onClick={() => {
+                                    const response = ai.current.generateResponse(email, aiStyle);
+                                    showNotification('ai', 'AI Response', `Generated: "${response}"`);
+                                }}
+                                className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs"
+                            >
+                                <i className="fas fa-brain mr-1"></i>AI Reply
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+
+            const StatCard = ({ icon, value, label, color }) => (
+                <div className="glass rounded-xl p-4 text-center">
+                    <i className={`fas fa-${icon} text-2xl text-${color}-400 mb-2`}></i>
+                    <div className={`text-2xl font-bold text-${color}-400`}>{value}</div>
+                    <div className="text-gray-300 text-sm">{label}</div>
+                </div>
+            );
+
+            const tabs = [
+                { id: 'inbox', label: 'Secure Inbox', icon: 'inbox' },
+                { id: 'security', label: 'Security Center', icon: 'shield-alt' },
+                { id: 'ai', label: 'AI Assistant', icon: 'brain' }
+            ];
+
+            return (
+                <div className="min-h-screen">
+                    {notification && (
+                        <Notification 
+                            notification={notification} 
+                            onDismiss={() => setNotification(null)} 
+                        />
+                    )}
+
+                    {/* Header */}
+                    <div className="glass border-b border-white/20">
+                        <div className="max-w-6xl mx-auto px-4 py-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <i className="fas fa-shield-alt text-white text-2xl mr-3"></i>
+                                    <h1 className="text-2xl font-bold text-white">SecureGmail Pro</h1>
+                                    <span className="ml-3 px-2 py-1 bg-green-500 text-white rounded text-xs animate-glow">LIVE</span>
+                                </div>
+                                <div className="flex items-center text-white">
+                                    <div className={`w-2 h-2 rounded-full mr-2 ${isScanning ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`}></div>
+                                    <span className="text-sm">{isScanning ? 'Scanning...' : 'Protected'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-6xl mx-auto px-4 py-6">
+                        <div className="flex space-x-6">
+                            {/* Sidebar */}
+                            <div className="w-64">
+                                <nav className="space-y-2">
+                                    {tabs.map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`w-full flex items-center px-4 py-3 rounded-lg transition-all ${
+                                                activeTab === tab.id 
+                                                    ? 'glass text-white glow-blue' 
+                                                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <i className={`fas fa-${tab.icon} mr-3`}></i>
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </nav>
+
+                                {/* Quick Stats */}
+                                <div className="mt-6 space-y-3">
+                                    <StatCard icon="envelope" value={stats.scanned} label="Scanned" color="blue" />
+                                    <StatCard icon="shield-alt" value={stats.blocked} label="Blocked" color="red" />
+                                    <StatCard icon="check-circle" value={stats.clean} label="Clean" color="green" />
+                                </div>
+                            </div>
+
+                            {/* Main Content */}
+                            <div className="flex-1">
+                                {/* Inbox Tab */}
+                                {activeTab === 'inbox' && (
+                                    <div>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h2 className="text-2xl font-bold text-white">Secure Inbox</h2>
+                                            <button 
+                                                onClick={scanEmails}
+                                                disabled={isScanning}
+                                                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                                                    isScanning 
+                                                        ? 'bg-yellow-500 cursor-not-allowed' 
+                                                        : 'bg-blue-500 hover:bg-blue-600'
+                                                } text-white`}
+                                            >
+                                                {isScanning ? (
+                                                    <><i className="fas fa-spinner fa-spin mr-2"></i>Scanning...</>
+                                                ) : (
+                                                    <><i className="fas fa-sync mr-2"></i>Re-scan</>
+                                                )}
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="scrollbar-none max-h-96 overflow-y-auto">
+                                            {emails.map(email => <EmailCard key={email.id} email={email} />)}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Security Tab */}
+                                {activeTab === 'security' && (
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white mb-6">Security Center</h2>
+                                        
+                                        {/* Security Status */}
+                                        <div className="glass rounded-xl p-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-white mb-4">Protection Status</h3>
+                                            <div className="grid md:grid-cols-3 gap-4">
+                                                <div className="flex items-center">
+                                                    <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                                    <span className="text-gray-200">Malware Scanner: Active</span>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                                    <span className="text-gray-200">Phishing Guard: Active</span>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                                    <span className="text-gray-200">AI Analysis: Learning</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Blocked Threats */}
+                                        <div className="glass rounded-xl p-6">
+                                            <h3 className="text-lg font-semibold text-white mb-4">Blocked Threats</h3>
+                                            <div className="scrollbar-none max-h-64 overflow-y-auto">
+                                                {threats.length === 0 ? (
+                                                    <div className="text-center py-8">
+                                                        <i className="fas fa-shield-alt text-4xl text-green-400 mb-3"></i>
+                                                        <div className="text-gray-300">No threats detected</div>
+                                                    </div>
+                                                ) : (
+                                                    threats.map(threat => <EmailCard key={threat.id} email={threat} type="threat" />)
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* AI Tab */}
+                                {activeTab === 'ai' && (
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white mb-6">AI Assistant</h2>
+                                        
+                                        <div className="glass rounded-xl p-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-white mb-4">AI Response Style</h3>
+                                            <div className="flex space-x-3">
+                                                {['professional', 'casual', 'formal'].map(style => (
+                                                    <button
+                                                        key={style}
+                                                        onClick={() => {
+                                                            setAiStyle(style);
+                                                            showNotification('ai', 'Style Updated', `AI style changed to ${style}`);
+                                                        }}
+                                                        className={`px-4 py-2 rounded-lg transition-all ${
+                                                            aiStyle === style 
+                                                                ? 'bg-purple-500 text-white' 
+                                                                : 'bg-white/20 text-gray-200 hover:bg-white/30'
+                                                        }`}
+                                                    >
+                                                        {style.charAt(0).toUpperCase() + style.slice(1)}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="glass rounded-xl p-6">
+                                            <h3 className="text-lg font-semibold text-white mb-4">AI Insights</h3>
+                                            <div className="grid md:grid-cols-2 gap-4 text-gray-200">
+                                                <div>
+                                                    <h4 className="font-medium mb-2">Learning Progress</h4>
+                                                    <div className="text-sm space-y-1">
+                                                        <div>• Email patterns analyzed: 1,247</div>
+                                                        <div>• Response accuracy: 94.7%</div>
+                                                        <div>• Threat detection: 98.9%</div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-medium mb-2">Capabilities</h4>
+                                                    <div className="text-sm space-y-1">
+                                                        <div>✓ Smart categorization</div>
+                                                        <div>✓ Priority detection</div>
+                                                        <div>✓ Response generation</div>
+                                                        <div>✓ Threat analysis</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<SecureGmailPro />, document.getElementById('app'));
+    </script>
+</body>
+</html>
